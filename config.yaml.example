@@ -1,0 +1,195 @@
+# LUINT Configuration File Example
+# Copy this file to config.yaml and customize as needed
+
+# General configuration options
+general:
+  # Duration in seconds for caching results
+  cache_duration: 3600
+  # Maximum number of threads to use for concurrent operations
+  threads: 10
+  # Default timeout for HTTP requests in seconds
+  timeout: 30
+  # Default user agent for HTTP requests
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  # Output directory for results (relative or absolute path)
+  output_dir: "results"
+  # Default verbosity level (0-3)
+  verbosity: 1
+
+# Module-specific configuration
+modules:
+  # DNS Information module configuration
+  dns_info:
+    # DNS servers to use for lookups
+    dns_servers: ['8.8.8.8', '1.1.1.1']
+    # Timeout for DNS queries in seconds
+    timeout: 5
+    # Whether to check DNSSEC validation
+    check_dnssec: true
+    # Whether to check DNS-over-HTTPS/TLS capabilities
+    check_doh_dot: true
+    # Whether to perform zone transfer attempt (AXFR)
+    attempt_zone_transfer: false
+    # Whether to check for DNS wildcards
+    check_wildcard: true
+    # Maximum number of WHOIS retries
+    whois_retries: 3
+    # Whether to check for email-related DNS records (SPF, DMARC, DKIM)
+    check_email_records: true
+    # Whether to perform security posture assessment
+    security_assessment: true
+    
+  # Server Information module configuration
+  server_info:
+    # Ports to scan during port scanning
+    ports: [21, 22, 23, 25, 53, 80, 110, 111, 135, 139, 143, 443, 445, 993, 995, 1723, 3306, 3389, 5900, 8080, 8443]
+    # Timeout for port scanning in seconds
+    scan_timeout: 5
+    # Whether to detect Web Application Firewall (WAF)
+    detect_waf: true
+    # Whether to check SSL/TLS certificates
+    ssl_check: true
+    # Whether to perform web technology detection
+    detect_tech: true
+    # Whether to perform banner grabbing on open ports
+    banner_grabbing: true
+    # Whether to perform advanced port vulnerability scanning (more intrusive)
+    perform_advanced_port_scan: false
+    # Whether to perform security posture assessment
+    security_assessment: true
+    # HTTP methods to test
+    http_methods: ["GET", "HEAD", "OPTIONS"]
+    # Whether to check for cloud service metadata endpoints
+    check_cloud_metadata: false
+    
+  # Subdomain Enumeration module configuration
+  subdomain_enum:
+    # Wordlist file for subdomain brute forcing
+    wordlist: "wordlists/subdomains.txt"
+    # Maximum number of subdomains to return
+    max_subdomains: 1000
+    # Timeout for subdomain resolution in seconds
+    timeout: 5
+    # Whether to use DNS brute forcing
+    use_bruteforce: true
+    # Whether to check certificate transparency logs
+    use_cert_transparency: true
+    # Whether to use TLS-based virtual host detection
+    use_vhost_discovery: true
+    # Whether to perform permutation scanning
+    use_permutations: true
+    # Permutation patterns ("prefix", "suffix", "hyphen", "homoglyph", "bit_flipping")
+    permutation_patterns: ["prefix", "suffix", "hyphen"]
+    # Concurrency level for subdomain enumeration
+    threads: 30
+    # Whether to check for similar domains (typosquatting)
+    check_similar_domains: false
+    
+  # Content Discovery module configuration
+  content_discovery:
+    # Wordlist for directory brute forcing
+    directories_wordlist: "wordlists/directories.txt"
+    # Wordlist for file brute forcing
+    files_wordlist: "wordlists/files.txt"
+    # Maximum depth for recursion
+    max_depth: 3
+    # Threads for content discovery
+    threads: 20
+    # File extensions to append to wordlists during brute force
+    extensions: [".php", ".asp", ".aspx", ".jsp", ".html", ".js", ".txt", ".pdf", ".bak", ".config", ".old", ".sql", ".xml", ".json"]
+    # Whether to follow redirects
+    follow_redirects: true
+    # Whether to extract metadata from discovered files
+    extract_metadata: true
+    # Whether to use web crawling
+    use_crawler: true
+    # Maximum number of pages to crawl
+    max_crawl_pages: 100
+    # Detect sensitive files with specific patterns
+    detect_sensitive_files: true
+    
+  # Email Reconnaissance module configuration
+  email_recon:
+    # Whether to extract emails from webpage content
+    extract_from_web: true
+    # Whether to check for email security configurations
+    check_email_security: true
+    # Whether to guess email patterns
+    guess_patterns: true
+    # Verify found email addresses
+    verify_emails: false
+    # Maximum number of email addresses to return
+    max_emails: 100
+    # Whether to check for social media profiles
+    find_social_profiles: false
+    
+  # Security Checks module configuration
+  security_checks:
+    # Whether to check domain reputation
+    check_reputation: true
+    # Whether to check server security headers
+    check_security_headers: true
+    # Whether to check for known vulnerabilities based on software versions
+    check_vulnerabilities: true
+    # Whether to check for misconfigured security settings
+    check_misconfigurations: true
+    # Blacklist services to check
+    blacklist_checks: ["spamhaus", "sorbs", "barracuda"]
+    # Whether to check for exposed sensitive files
+    check_sensitive_exposure: true
+    # Whether to check for information disclosure
+    check_info_disclosure: true
+    # Whether to perform a lightweight malware scan on accessible content
+    scan_for_malware: false
+
+# API keys configuration (replace with your actual keys)
+api_keys:
+  # Shodan API key for service discovery (https://account.shodan.io/)
+  shodan: "YOUR_SHODAN_API_KEY"
+  # VirusTotal API key for file scanning and reputation checks (https://www.virustotal.com/)
+  virustotal: "YOUR_VIRUSTOTAL_API_KEY"
+  # SecurityTrails API key for historical DNS data (https://securitytrails.com/)
+  securitytrails: "YOUR_SECURITYTRAILS_API_KEY"
+  # Censys API key for Internet-wide scanning data (https://censys.io/)
+  censys: "YOUR_CENSYS_API_KEY"
+  # AlienVault OTX API key for threat intelligence (https://otx.alienvault.com/)
+  alienvault: "YOUR_ALIENVAULT_API_KEY"
+  # IPinfo API key for IP geolocation (https://ipinfo.io/)
+  ipinfo: "YOUR_IPINFO_API_KEY"
+
+# Proxy configuration (if needed)
+proxy:
+  # Whether to use a proxy for HTTP requests
+  enabled: false
+  # Proxy URL (format: http://user:pass@host:port or socks5://user:pass@host:port)
+  url: "http://127.0.0.1:8080"
+  # Whether to verify SSL certificates when using proxy
+  verify_ssl: true
+
+# Rate limiting configuration to respect API limits
+rate_limiting:
+  # Whether to enable rate limiting
+  enabled: true
+  # Default requests per minute
+  default_rpm: 60
+  # Service-specific rate limits (requests per minute)
+  services:
+    shodan: 60
+    virustotal: 4
+    securitytrails: 10
+    censys: 120
+    alienvault: 100
+    ipinfo: 50
+
+# Logging configuration
+logging:
+  # Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  level: "INFO"
+  # Whether to log to file
+  file_logging: true
+  # Log file path
+  log_file: "logs/luint.log"
+  # Maximum log file size in bytes before rotation (5MB)
+  max_file_size: 5242880
+  # Number of backup log files to keep
+  backup_count: 3

@@ -1,0 +1,74 @@
+# LUINT - Python Project .gitignore
+
+# Configuration files with potential sensitive information
+config.yaml
+secrets.yaml
+.env
+
+# Cached results and generated reports
+results/
+reports/
+results.json
+report.html
+*_results.json
+*_report.html
+
+# Log files
+logs/*.log
+*.log
+*.log.*
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env/
+.virtualenv/
+
+# Distribution / packaging
+build/
+dist/
+wheels/
+*.egg-info/
+*.egg
+
+# Testing and documentation artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+docs/_build/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+.DS_Store
+
+# OS specific files
+Thumbs.db
+desktop.ini
+
+# API keys and credentials
+api_keys.txt
+credentials.json
+
+# Replit specific
+.replit
+.replit.nix
+.config/
+poetry.lock

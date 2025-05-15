@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LUINT Scan Report - {{ target }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 18px;
+        }
+        .scan-meta {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        .scan-meta div {
+            flex: 1;
+        }
+        h2 {
+            color: #3498db;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 40px;
+        }
+        h3 {
+            color: #2c3e50;
+            margin-top: 25px;
+        }
+        .module-summary {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .module-card {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            flex: 1 1 300px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .module-card h3 {
+            margin-top: 0;
+            color: #3498db;
+        }
+        .module-card.success {
+            border-left: 4px solid #2ecc71;
+        }
+        .module-card.warning {
+            border-left: 4px solid #f39c12;
+        }
+        .module-card.error {
+            border-left: 4px solid #e74c3c;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .data-table th {
+            background-color: #3498db;
+            color: #fff;
+            text-align: left;
+            padding: 12px;
+        }
+        .data-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .data-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .data-card {
+            background-color: #fff;
+            border: 1px solid #e1e1e1;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .data-card h4 {
+            margin-top: 0;
+            color: #3498db;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+            border: 1px solid #e1e1e1;
+        }
+        .label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .value {
+            color: #333;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #7f8c8d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LUINT Scan Report</h1>
+            <div class="subtitle">Comprehensive OSINT Analysis</div>
+        </header>
+
+        <div class="scan-meta">
+            <div>
+                <p><span class="label">Target:</span> <span class="value">{{ target }}</span></p>
+                <p><span class="label">Scan Date:</span> <span class="value">{{ timestamp }}</span></p>
+            </div>
+            <div>
+                <p><span class="label">Duration:</span> <span class="value">{{ duration }} seconds</span></p>
+                <p><span class="label">Modules:</span> <span class="value">{{ modules|length }}</span></p>
+            </div>
+            <div>
+                <p><span class="label">Total Findings:</span> <span class="value">{{ total_findings }}</span></p>
+                <p><span class="label">LUINT Version:</span> <span class="value">{{ version }}</span></p>
+            </div>
+        </div>
+
+        <h2>Scan Summary</h2>
+        <div class="module-summary">
+            {% for module_name, module_data in results.items() %}
+            <div class="module-card {% if module_data.success %}success{% else %}error{% endif %}">
+                <h3>{{ module_name }}</h3>
+                <p><span class="label">Status:</span> <span class="value">{% if module_data.success %}Completed{% else %}Failed{% endif %}</span></p>
+                <p><span class="label">Findings:</span> <span class="value">{{ module_data.findings|length if module_data.findings else 0 }}</span></p>
+                {% if module_data.execution_time %}
+                <p><span class="label">Execution Time:</span> <span class="value">{{ module_data.execution_time }} seconds</span></p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        {% for module_name, module_data in results.items() %}
+        <h2>{{ module_name }}</h2>
+        
+        {% if module_data.findings %}
+            {% for finding_name, finding_data in module_data.findings.items() %}
+            <div class="data-card">
+                <h4>{{ finding_name }}</h4>
+                
+                {% if finding_data is mapping %}
+                    {% for key, value in finding_data.items() %}
+                    <p><span class="label">{{ key }}:</span>
+                        {% if value is mapping or value is sequence and value is not string %}
+                        <pre>{{ value|tojson(indent=2) }}</pre>
+                        {% else %}
+                        <span class="value">{{ value }}</span>
+                        {% endif %}
+                    </p>
+                    {% endfor %}
+                {% elif finding_data is sequence and finding_data is not string %}
+                    <pre>{{ finding_data|tojson(indent=2) }}</pre>
+                {% else %}
+                    <p>{{ finding_data }}</p>
+                {% endif %}
+            </div>
+            {% endfor %}
+        {% else %}
+            <p>No findings for this module.</p>
+        {% endif %}
+        {% endfor %}
+
+        <div class="footer">
+            <p>Generated by <a href="https://github.com/pixelbrow720/luint" target="_blank">LUINT</a> - A comprehensive modular OSINT tool</p>
+            <p>Author: pixelbrow720 | Twitter: @BrowPixel | Email: pixelbrow13@gmail.com</p>
+        </div>
+    </div>
+</body>
+</html>

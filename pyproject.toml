@@ -1,0 +1,82 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "luint"
+version = "1.0.0"
+description = "A comprehensive modular OSINT tool for network reconnaissance and security analysis"
+readme = "README.md"
+authors = [
+    {name = "pixelbrow720", email = "pixelbrow13@gmail.com"}
+]
+requires-python = ">=3.8"
+dependencies = [
+    "beautifulsoup4>=4.13.0",
+    "click>=8.0.0",
+    "colorama>=0.4.4",
+    "dnspython>=2.0.0",
+    "email-validator>=2.0.0",
+    "flask>=3.0.0",
+    "flask-sqlalchemy>=3.0.0",
+    "ipwhois>=1.2.0",
+    "jinja2>=3.0.0",
+    "mmh3>=3.0.0",
+    "psycopg2-binary>=2.9.0",
+    "pyopenssl>=21.0.0",
+    "python-nmap>=0.7.1",
+    "python-whois>=0.7.3",
+    "pyyaml>=6.0.0",
+    "requests>=2.25.0",
+    "requests-cache>=0.9.0",
+    "rich>=10.0.0",
+    "tldextract>=3.1.0",
+    "trafilatura>=2.0.0",
+    "urllib3>=1.26.0",
+    "tabulate>=0.8.9",
+    "cryptography>=35.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=6.0.0",
+    "pytest-cov>=2.12.0",
+    "flake8>=3.9.0",
+    "black>=21.5b2",
+    "isort>=5.9.0",
+]
+
+[project.scripts]
+luint = "luint.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/pixelbrow720/luint"
+Issues = "https://github.com/pixelbrow720/luint/issues"
+
+[tool.setuptools]
+packages = ["luint"]
+include-package-data = true
+
+[tool.setuptools.exclude-package-data]
+"*" = ["*.log", "*.pyc"]
+
+[tool.setuptools.package-data]
+"luint" = ["py.typed"]
+
+# Explicitly exclude directories that aren't Python packages
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["luint*"]
+exclude = ["logs*", "wordlists*", "tests*", "results*", "reports*"]
+
+[tool.black]
+line-length = 100
+target-version = ["py38"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"

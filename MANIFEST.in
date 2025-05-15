@@ -1,0 +1,32 @@
+include LICENSE
+include README.md
+include PANDUAN_INSTALASI.md
+include STRUKTUR_KODE.md
+include FITUR_KEAMANAN.md
+include KESIAPAN_PROYEK.md
+include pyproject.toml
+include setup.py
+include config.yaml.example
+
+# Exclude config.yaml yang berisi informasi sensitif
+exclude config.yaml
+
+# Exclude file hasil dan cache
+exclude results.json
+exclude report.html
+exclude *.pyc
+exclude __pycache__
+exclude *.log
+exclude .venv
+exclude venv
+exclude .env
+
+# Include file penting untuk modul
+recursive-include luint *.py *.txt *.json
+
+# Include wordlists files
+recursive-include wordlists *.txt
+
+# Pastikan direktori logs tetap ada
+recursive-include logs .gitkeep
+exclude logs/*
