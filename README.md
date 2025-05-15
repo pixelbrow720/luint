@@ -140,15 +140,15 @@ api_keys:
 
 ## Project Structure
 
-For detailed information about the code structure and architecture, see [STRUKTUR_KODE.md](STRUKTUR_KODE.md).
+For detailed information about the code structure and architecture, see [STRUKTUR_KODE.md](docs/STRUKTUR_KODE.md).
 
 ## Security Features
 
-For detailed information about the security assessment features, see [FITUR_KEAMANAN.md](FITUR_KEAMANAN.md).
+For detailed information about the security assessment features, see [FITUR_KEAMANAN.md](docs/FITUR_KEAMANAN.md).
 
 ## Project Status
 
-For information about the project's maturity and readiness, see [KESIAPAN_PROYEK.md](KESIAPAN_PROYEK.md).
+For information about the project's maturity and readiness, see [KESIAPAN_PROYEK.md](docs/KESIAPAN_PROYEK.md).
 
 ## License
 
