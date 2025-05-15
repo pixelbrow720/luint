@@ -87,7 +87,7 @@ class ContentDiscoveryScanner:
         self.found_codes = self.module_config.get('found_codes', [200, 201, 202, 203, 204, 301, 302, 307])
         
         # Word list paths
-        self.wordlist_dirs = self.module_config.get('wordlist_dirs', 'wordlists/directories.txt')
+        self.wordlist_dirs = self.module_config.get('wordlist_dirs', 'self.config.get('directories_wordlist', 'wordlists/directories.txt')')
         self.wordlist_files = self.module_config.get('wordlist_files', 'wordlists/files.txt')
         self.wordlist_extensions = self.module_config.get('wordlist_extensions', COMMON_EXTENSIONS[:10])
         

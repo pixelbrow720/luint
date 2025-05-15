@@ -1,6 +1,10 @@
+
 """
 Constants used throughout the LUINT tool.
 """
+from typing import Dict, Any
+from rich.style import Style
+from rich.theme import Theme
 
 # Version information
 VERSION = "1.0.0"
@@ -56,6 +60,61 @@ ERROR_MESSAGES = {
     'unknown_error': 'An unknown error occurred: {error}'
 }
 
+# API configuration with version placeholders
+API_CONFIG = {
+    'virustotal': {'version': 'v3', 'base_url': 'https://www.virustotal.com/api'},
+    'shodan': {'version': 'v1', 'base_url': 'https://api.shodan.io'},
+    'urlscan': {'version': 'v1', 'base_url': 'https://urlscan.io/api'},
+    'abuseipdb': {'version': 'v2', 'base_url': 'https://api.abuseipdb.com/api'},
+    'ipinfo': {'version': 'v1', 'base_url': 'https://ipinfo.io'},
+    'crtsh': {'version': None, 'base_url': 'https://crt.sh'}
+}
+
+# Dynamic API endpoints
+def get_api_endpoint(service: str, endpoint_type: str, **kwargs) -> str:
+    config = API_CONFIG[service]
+    base = config['base_url']
+    version = f"/{config['version']}" if config['version'] else ""
+    
+    endpoints = {
+        'virustotal': {
+            'domain': f"{base}{version}/domains/{kwargs.get('target')}",
+            'ip': f"{base}{version}/ip_addresses/{kwargs.get('target')}",
+            'url': f"{base}{version}/urls"
+        },
+        'shodan': {
+            'host': f"{base}/shodan/host/{kwargs.get('target')}",
+            'dns': f"{base}/dns/resolve"
+        },
+        'urlscan': {
+            'scan': f"{base}{version}/scan/",
+            'result': f"{base}{version}/result/{kwargs.get('uuid')}",
+            'search': f"{base}{version}/search/"
+        },
+        'abuseipdb': {
+            'check': f"{base}{version}/check"
+        },
+        'ipinfo': {
+            'ip': f"{base}/{kwargs.get('target')}/json"
+        },
+        'crtsh': {
+            'domain': f"{base}/?q={kwargs.get('target')}&output=json"
+        }
+    }
+    
+    return endpoints[service][endpoint_type]
+
+# Rich theme for consistent styling
+LUINT_THEME = Theme({
+    "info": Style(color="cyan"),
+    "warning": Style(color="yellow"),
+    "error": Style(color="red", bold=True),
+    "success": Style(color="green"),
+    "header": Style(color="blue", bold=True),
+    "highlight": Style(color="magenta"),
+    "muted": Style(color="grey70"),
+})
+
 # Common regex patterns
 REGEX_PATTERNS = {
     'email': r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
@@ -104,84 +163,14 @@ WEB_TECHNOLOGIES = [
 
 # Common sensitive files and directories to check
 SENSITIVE_FILES = [
-    'robots.txt',
-    'sitemap.xml',
-    '.git/HEAD',
-    '.env',
-    '.htaccess',
-    'wp-config.php',
-    'config.php',
-    'phpinfo.php',
-    'admin/',
-    'administrator/',
-    'login/',
-    'wp-admin/',
-    'backup/',
-    'backup.zip',
-    'backup.tar.gz',
-    'db.sql',
-    'database.sql',
-    'debug.log',
-    'error.log',
-    'server-status',
-    'server-info',
-    '.DS_Store',
-    '.svn/entries',
-    '.idea/',
-    '.vscode/',
-    'Dockerfile',
-    'docker-compose.yml',
-    'README.md',
-    'CHANGELOG.md',
-    'LICENSE',
-    'CONTRIBUTING.md',
-    'package.json',
-    'composer.json',
-    'Gemfile',
+    'robots.txt', 'sitemap.xml', '.git/HEAD', '.env', '.htaccess', 'wp-config.php',
+    'config.php', 'phpinfo.php', 'admin/', 'administrator/', 'login/', 'wp-admin/',
+    'backup/', 'backup.zip', 'backup.tar.gz', 'db.sql', 'database.sql', 'debug.log',
+    'error.log', 'server-status', 'server-info', '.DS_Store', '.svn/entries', '.idea/',
+    '.vscode/', 'Dockerfile', 'docker-compose.yml', 'README.md', 'CHANGELOG.md',
+    'LICENSE', 'CONTRIBUTING.md', 'package.json', 'composer.json', 'Gemfile',
     'requirements.txt'
 ]
-
-# API endpoints
-API_ENDPOINTS = {
-    'virustotal': {
-        'domain': 'https://www.virustotal.com/api/v3/domains/{target}',
-        'ip': 'https://www.virustotal.com/api/v3/ip_addresses/{target}',
-        'url': 'https://www.virustotal.com/api/v3/urls'
-    },
-    'shodan': {
-        'host': 'https://api.shodan.io/shodan/host/{target}',
-        'dns': 'https://api.shodan.io/dns/resolve'
-    },
-    'urlscan': {
-        'scan': 'https://urlscan.io/api/v1/scan/',
-        'result': 'https://urlscan.io/api/v1/result/{uuid}',
-        'search': 'https://urlscan.io/api/v1/search/'
-    },
-    'abuseipdb': {
-        'check': 'https://api.abuseipdb.com/api/v2/check'
-    },
-    'ipinfo': {
-        'ip': 'https://ipinfo.io/{target}/json'
-    },
-    'crtsh': {
-        'domain': 'https://crt.sh/?q={target}&output=json'
-    }
-}
-
-# Color codes for terminal output
-COLORS = {
-    'reset': '\033[0m',
-    'black': '\033[30m',
-    'red': '\033[31m',
-    'green': '\033[32m',
-    'yellow': '\033[33m',
-    'blue': '\033[34m',
-    'magenta': '\033[35m',
-    'cyan': '\033[36m',
-    'white': '\033[37m',
-    'bold': '\033[1m',
-    'underline': '\033[4m'
-}
 
 # Common file extensions for content discovery
 COMMON_EXTENSIONS = [

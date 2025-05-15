@@ -3968,7 +3968,7 @@ class ServerInfoScanner:
     def _check_service_vulnerabilities(self, service: str, product: str, version: str) -> List[Dict[str, Any]]:
         """
         Check for known vulnerabilities in the detected service and version.
-        Uses an external vulnerability database (PostgreSQL or local JSON file).
+        Uses VulnerabilityDatabase instance for lookups.
         
         Args:
             service (str): Service name (e.g., http, ssh)
@@ -3978,6 +3978,10 @@ class ServerInfoScanner:
         Returns:
             list: List of vulnerability dictionaries
         """
+        if not self.vuln_db:
+            self.logger.warning("VulnerabilityDatabase not initialized")
+            return []
+            
         vulnerabilities = []
         
         if not service or not product:

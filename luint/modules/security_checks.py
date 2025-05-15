@@ -212,29 +212,12 @@ class SecurityChecksScanner:
             'blacklisted_on': 0
         }
         
-        # List of DNS blacklists to check
-        dnsbls = [
+        # Get DNSBL servers from config
+        dnsbls = self.config.get('security_checks', {}).get('dnsbl_servers', [
             'zen.spamhaus.org',
             'bl.spamcop.net',
-            'dnsbl.sorbs.net',
-            'dnsbl-1.uceprotect.net',
-            'spam.dnsbl.anonmails.de',
-            'spam.spamrats.com',
-            'mail-abuse.blacklist.jippg.org',
-            'cbl.abuseat.org',
-            'b.barracudacentral.org',
-            'all.s5h.net',
-            'ubl.unsubscore.com',
-            'dyna.spamrats.com',
-            'bl.mailspike.net',
-            'bl.spameatingmonkey.net',
-            'bogons.cymru.com',
-            'combined.abuse.ch',
-            'db.wpbl.info',
-            'psbl.surriel.com',
-            'ix.dnsbl.manitu.net',
-            'tor.dan.me.uk'
-        ]
+            'dnsbl.sorbs.net'  # Fallback minimum list
+        ])
         
         # If target is a domain, use the IP address for DNSBL checks
         ip = self.target_ip
@@ -1019,15 +1002,17 @@ class SecurityChecksScanner:
             # Categorize technology into appropriate service category
             service_category = "http"  # Default to http service
             
+            # Get tech categories from config
+            tech_categories = self.config.get('security_checks', {}).get('tech_categories', {})
+            
             # Map technology to appropriate service category
-            if any(cms in tech_name.lower() for cms in ["wordpress", "drupal", "joomla"]):
-                service_category = "cms"
-            elif any(db in tech_name.lower() for db in ["mysql", "postgresql", "mongodb"]):
-                service_category = "database"
-            elif any(fw in tech_name.lower() for fw in ["django", "flask", "laravel", "react", "angular", "vue"]):
-                service_category = "framework"
-            elif any(server in tech_name.lower() for server in ["apache", "nginx", "iis"]):
-                service_category = "http"
+            tech_name_lower = tech_name.lower()
+            service_category = "http"  # Default category
+            
+            for category, techs in tech_categories.items():
+                if any(tech.lower() in tech_name_lower for tech in techs):
+                    service_category = category
+                    break
             
             # Query our vulnerability database
             vulns = self.vuln_db.get_vulnerabilities(service_category, tech_name, version or "")
@@ -1064,36 +1049,22 @@ class SecurityChecksScanner:
         if tech_info and 'server' in tech_info and tech_info['server']:
             server = tech_info['server'].lower()
             
-            # Example: Check for outdated Apache/PHP versions
-            if 'apache' in server:
-                version_match = re.search(r'apache/(\d+\.\d+\.\d+)', server, re.IGNORECASE)
-                if version_match:
-                    version = version_match.group(1)
-                    if version < '2.4.53':
-                        detected_vulns.append({
-                            'technology': 'Apache',
-                            'id': 'AP-VERSION',
-                            'name': f'Outdated Apache Version ({version})',
-                            'description': 'Running an outdated version of Apache may expose your server to known vulnerabilities',
-                            'severity': 'medium',
-                            'cvss': 5.0,
-                            'references': ['https://httpd.apache.org/security/vulnerabilities_24.html']
-                        })
+            # Extract and check versions using vulnerability database
+            version_patterns = {
+                'apache': r'apache/(\d+\.\d+\.\d+)',
+                'php': r'php/(\d+\.\d+\.\d+)',
+                'nginx': r'nginx/(\d+\.\d+\.\d+)'
+            }
             
-            # Check for PHP version
-            php_match = re.search(r'php/(\d+\.\d+\.\d+)', server, re.IGNORECASE)
-            if php_match:
-                php_version = php_match.group(1)
-                if php_version < '7.4.28':
-                    detected_vulns.append({
-                        'technology': 'PHP',
-                        'id': 'PHP-VERSION',
-                        'name': f'Outdated PHP Version ({php_version})',
-                        'description': 'Running an outdated version of PHP may expose your application to known vulnerabilities',
-                        'severity': 'medium',
-                        'cvss': 5.0,
-                        'references': ['https://www.php.net/security/']
-                    })
+            for tech, pattern in version_patterns.items():
+                if tech in server.lower():
+                    version_match = re.search(pattern, server, re.IGNORECASE)
+                    if version_match:
+                        version = version_match.group(1)
+                        # Query vulnerability database for version-specific issues
+                        vulns = self.vuln_db.get_vulnerabilities('http', tech, version)
+                        if vulns:
+                            detected_vulns.extend(vulns)
         
         # Add results
         results['vulnerabilities'] = detected_vulns

@@ -31,14 +31,55 @@ def display_banner():
     console.print("\n")
 
 
+# Singleton instances for commonly used managers
+_plugin_manager = None
+_config = None
+_api_key_manager = None
+
+def get_plugin_manager():
+    """Get or create singleton PluginManager instance."""
+    global _plugin_manager
+    if _plugin_manager is None:
+        _plugin_manager = PluginManager()
+    return _plugin_manager
+
+def get_config():
+    """Get or create singleton config instance."""
+    global _config
+    if _config is None:
+        config_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config.yaml')
+        _config = load_config(config_path)
+    return _config
+
+def get_api_key_manager():
+    """Get or create singleton APIKeyManager instance."""
+    global _api_key_manager
+    if _api_key_manager is None:
+        _api_key_manager = APIKeyManager(get_config().get('api_keys', {}))
+    return _api_key_manager
+
 def validate_target(ctx, param, value):
     """Validate the target parameter to ensure it's a domain or IP."""
     if not value:
         return value
-    # Simple validation - could be expanded with regex for proper domain/IP validation
-    if not any(c.isalnum() for c in value):
-        raise click.BadParameter("Target must be a valid domain or IP address")
-    return value
+        
+    # IP address validation
+    ip_pattern = r'^(\d{1,3}\.){3}\d{1,3}$'
+    # Domain validation (simplified but more strict than before)
+    domain_pattern = r'^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
+    
+    if re.match(ip_pattern, value):
+        # Basic IP format validation
+        try:
+            parts = [int(p) for p in value.split('.')]
+            if all(0 <= p <= 255 for p in parts):
+                return value
+        except ValueError:
+            pass
+    elif re.match(domain_pattern, value):
+        return value
+        
+    raise click.BadParameter("Target must be a valid domain or IP address")
 
 
 @click.group(help="LUINT - A comprehensive modular OSINT tool for network reconnaissance and security analysis.")
@@ -64,15 +105,52 @@ def cli():
 @click.option('--no-cache', is_flag=True, help='Disable caching of results')
 @click.option('--recursive', '-r', is_flag=True, help='Enable recursive scanning')
 @click.option('--depth', '-d', type=int, default=1, help='Depth level for recursive scanning (default: 1)')
+def setup_scanner(target, module_list, all_modules, config_data, proxy, verbose, quiet, no_cache, recursive, depth):
+    """Setup scanner with given parameters."""
+    api_key_manager = get_api_key_manager()
+    
+    return Scanner(
+        target=target,
+        modules=list(module_list) if module_list and not all_modules else None,
+        run_all=all_modules,
+        config=config_data,
+        api_key_manager=api_key_manager,
+        proxy=proxy,
+        verbose=verbose,
+        quiet=quiet,
+        use_cache=not no_cache,
+        recursive=recursive,
+        depth=depth
+    )
+
+def display_scan_results(results, quiet, start_time):
+    """Display scan results in a formatted table."""
+    if quiet:
+        return
+        
+    end_time = time.time()
+    console.print(f"\n[bold green]Scan completed in {end_time - start_time:.2f} seconds[/bold green]")
+    
+    summary_table = Table(title="Scan Results Summary", box=box.ROUNDED)
+    summary_table.add_column("Module", style="cyan")
+    summary_table.add_column("Status", style="green")
+    summary_table.add_column("Findings", style="yellow")
+    
+    for module_name, module_results in results.items():
+        findings_count = len(module_results) if isinstance(module_results, list) else "N/A"
+        summary_table.add_row(
+            module_name,
+            "✓ Completed" if module_results else "⚠ No findings",
+            str(findings_count)
+        )
+    
+    console.print(summary_table)
+
 def scan(target, output, format, module, all, config, proxy, verbose, quiet, no_cache, recursive, depth):
     """Scan a target using specified modules."""
     try:
-        # Load configuration
-        config_path = config if config else os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'config.yaml')
-        config_data = load_config(config_path)
-        
-        # Setup API keys
-        api_key_manager = APIKeyManager(config_data.get('api_keys', {}))
+        # Get configuration
+        config_data = config if config else get_config()
         
         # Create scanner instance
         scanner = Scanner(
@@ -135,10 +213,10 @@ def scan(target, output, format, module, all, config, proxy, verbose, quiet, no_
 @click.option('--module', '-m', help='Show detailed information for a specific module')
 def modules(detailed, module):
     """List all available modules and their descriptions."""
-    from luint.core.plugin_manager import PluginManager
     from rich.panel import Panel
     
-    plugin_manager = PluginManager()
+    plugin_manager = get_plugin_manager()
+    api_key_manager = get_api_key_manager()
     available_modules = plugin_manager.list_modules()
     
     if not available_modules:
@@ -166,6 +244,14 @@ def modules(detailed, module):
         if module_info.get('detailed_description'):
             console.print("\n[bold]Details:[/bold]")
             console.print(f"  {module_info['detailed_description']}")
+            
+        # Show API key requirements if any
+        if module_info.get('required_apis'):
+            console.print("\n[bold]Required API Keys:[/bold]")
+            for api in module_info['required_apis']:
+                status = "✓ Configured" if api_key_manager.has_key(api) else "✗ Not configured"
+                color = "green" if api_key_manager.has_key(api) else "red"
+                console.print(f"  {api}: [{color}]{status}[/{color}]")
         
         # Show capabilities
         capabilities = module_info.get('capabilities', [])

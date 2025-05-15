@@ -1,3 +1,4 @@
+
 include LICENSE
 include README.md
 include PANDUAN_INSTALASI.md
@@ -12,25 +13,19 @@ include config.yaml.example
 # Exclude config.yaml yang berisi informasi sensitif
 exclude config.yaml
 
-# Exclude file hasil dan cache
+# Exclude file hasil dan cache dengan pola yang lebih ketat
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
 exclude results.json
 exclude report.html
-exclude *.pyc
-exclude __pycache__
-exclude *.log
 exclude .venv
 exclude venv
 exclude .env
 
 # Include file penting untuk modul
 recursive-include luint *.py *.txt *.json
+graft wordlists
 
-# Include test files
-recursive-include tests *.py
-
-# Include wordlists files
-recursive-include wordlists *.txt
-
-# Pastikan direktori logs tetap ada
-recursive-include logs .gitkeep
+# Pastikan direktori logs tetap ada tapi kosong
+include logs/.gitkeep
 exclude logs/*

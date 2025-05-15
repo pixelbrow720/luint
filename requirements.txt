@@ -1,15 +1,13 @@
+
 # LUINT dependencies
 beautifulsoup4>=4.13.0
 click>=8.0.0
 colorama>=0.4.4
 dnspython>=2.0.0
 email-validator>=2.0.0
-flask>=3.0.0
-flask-sqlalchemy>=3.0.0
 ipwhois>=1.2.0
 jinja2>=3.0.0
 mmh3>=3.0.0
-psycopg2-binary>=2.9.0
 pyopenssl>=21.0.0
 python-nmap>=0.7.1
 python-whois>=0.7.3
@@ -22,3 +20,11 @@ trafilatura>=2.0.0
 urllib3>=1.26.0
 tabulate>=0.8.9
 cryptography>=35.0.0
+setuptools>=75.3.2
+
+# Optional PostgreSQL support
+# pip install -r requirements.txt[postgres]
+# psycopg2-binary>=2.9.0
+rich
+rich
+packaging

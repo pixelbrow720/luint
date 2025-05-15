@@ -32,16 +32,19 @@ dependencies = [
     "urllib3>=1.26.0",
     "tabulate>=0.8.9",
     "cryptography>=35.0.0",
-    "setuptools>=75.3.2",
+    "setuptools>=75.3.2"
 ]
 
 [project.optional-dependencies]
+postgres = [
+    "psycopg2-binary>=2.9.0"
+]
 dev = [
     "pytest>=6.0.0",
     "pytest-cov>=2.12.0",
     "flake8>=3.9.0",
     "black>=21.5b2",
-    "isort>=5.9.0",
+    "isort>=5.9.0"
 ]
 
 [project.scripts]

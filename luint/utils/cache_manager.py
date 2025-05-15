@@ -177,7 +177,9 @@ class CacheManager:
                 cache_data = {
                     'timestamp': time.time(),
                     'ttl': ttl,
-                    'value': value
+                    'value': value,
+                    'namespace': namespace,
+                    'key': key
                 }
                 
                 with open(cache_path, 'wb') as f:
@@ -304,14 +306,23 @@ class CacheManager:
     
     def _get_all_keys_namespaces(self) -> List[Tuple[str, str]]:
         """
-        Get all key-namespace pairs stored in the current run (for internal use).
+        Get all key-namespace pairs by scanning cache files.
         
         Returns:
             list: List of (key, namespace) tuples
         """
-        # This must be implemented by tracking keys and namespaces when they're added
-        # As a fallback, we'll assume this isn't needed and return an empty list
-        return []
+        pairs = []
+        if os.path.exists(self.cache_dir):
+            for filename in os.listdir(self.cache_dir):
+                if filename.endswith('.cache'):
+                    try:
+                        with open(os.path.join(self.cache_dir, filename), 'rb') as f:
+                            cache_data = pickle.load(f)
+                            if 'namespace' in cache_data and 'key' in cache_data:
+                                pairs.append((cache_data['key'], cache_data['namespace']))
+                    except (OSError, pickle.PickleError):
+                        continue
+        return pairs
     
     def get_stats(self) -> Dict[str, Any]:
         """

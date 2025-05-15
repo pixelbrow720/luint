@@ -15,6 +15,25 @@
 - Sistem operasi: Windows, macOS, atau Linux
 - Koneksi internet untuk fitur pencarian yang bergantung pada API eksternal
 - Setidaknya 2GB RAM dan 500MB ruang disk
+- Nmap (diperlukan untuk pemindaian port dan deteksi layanan)
+
+### Instalasi Nmap
+
+Nmap diperlukan untuk modul server_info. Untuk menginstal:
+
+```bash
+# Di Replit
+# Nmap sudah terinstal secara default
+
+# Di Linux
+sudo apt-get install nmap
+
+# Di macOS
+brew install nmap
+
+# Di Windows
+# Unduh installer dari nmap.org
+```
 
 ## Instalasi
 
