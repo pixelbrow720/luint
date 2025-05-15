@@ -37,17 +37,15 @@ import concurrent.futures
 import ipaddress
 import requests
 import time
-import datetime
-import urllib.parse
 from urllib.parse import urlparse
 from typing import Dict, List, Any, Optional, Union, Tuple
 import OpenSSL.crypto as crypto
+from datetime import datetime
 import nmap
 
 from luint.utils.logger import get_logger, LoggerAdapter
 from luint.utils.helpers import is_ip_address, is_domain, normalize_url
 from luint.constants import SECURITY_HEADERS, WEB_TECHNOLOGIES, DEFAULT_HEADERS
-from luint.models.vulnerability import VulnerabilityDatabase
 
 logger = get_logger()
 
@@ -76,7 +74,6 @@ class ServerInfoScanner:
         self.cache_manager = cache_manager
         self.rate_limiter = rate_limiter
         self.api_key_manager = api_key_manager
-        self.vuln_db = VulnerabilityDatabase(self.config)
         
         # Setup module-specific logger
         self.logger = LoggerAdapter(logger, module_name='server_info', target=target)
@@ -668,53 +665,30 @@ class ServerInfoScanner:
                     
                     # Get certificate
                     cert_bin = ssock.getpeercert(binary_form=True)
-                    if cert_bin is not None:
-                        cert = crypto.load_certificate(crypto.FILETYPE_ASN1, cert_bin)
-                        
-                        # Extract certificate details
-                        results['version'] = cert.get_version() + 1  # Version is 0-indexed
-                        results['serial_number'] = '%x' % cert.get_serial_number()
-                        sig_algo = cert.get_signature_algorithm()
-                        if sig_algo is not None:
-                            results['signature_algorithm'] = sig_algo.decode('utf-8')
-                        else:
-                            results['signature_algorithm'] = 'Unknown'
-                        
-                        # Validity period
-                        not_before_bytes = cert.get_notBefore()
-                        not_after_bytes = cert.get_notAfter()
-                        
-                        if not_before_bytes is not None and not_after_bytes is not None:
-                            not_before = datetime.datetime.strptime(not_before_bytes.decode('utf-8'), '%Y%m%d%H%M%SZ')
-                            not_after = datetime.datetime.strptime(not_after_bytes.decode('utf-8'), '%Y%m%d%H%M%SZ')
-                            results['valid_from'] = not_before.strftime('%Y-%m-%d %H:%M:%S UTC')
-                            results['valid_until'] = not_after.strftime('%Y-%m-%d %H:%M:%S UTC')
-                            
-                            # Check if expired
-                            now = datetime.datetime.utcnow()
-                            results['is_expired'] = now > not_after
-                            results['days_until_expiry'] = (not_after - now).days
-                        else:
-                            results['valid_from'] = 'Unknown'
-                            results['valid_until'] = 'Unknown'
-                            results['is_expired'] = True
-                            results['days_until_expiry'] = 0
-                        
-                        # Issuer details
-                        issuer = cert.get_issuer()
-                        issuer_components = {}
-                        
-                        if issuer is not None:
-                            for i in range(issuer.get_entry_count()):
-                                entry = issuer.get_entry(i)
-                                if entry is not None and hasattr(entry, 'get_object') and hasattr(entry, 'get_data'):
-                                    obj = entry.get_object()
-                                    data = entry.get_data()
-                                    if obj is not None and data is not None:
-                                        issuer_components[obj.decode('utf-8')] = data.decode('utf-8')
-                    else:
-                        self.logger.warning(f"Could not obtain SSL certificate for {target}:{port}")
-                        results['has_ssl'] = False
+                    cert = crypto.load_certificate(crypto.FILETYPE_ASN1, cert_bin)
+                    
+                    # Extract certificate details
+                    results['version'] = cert.get_version() + 1  # Version is 0-indexed
+                    results['serial_number'] = '%x' % cert.get_serial_number()
+                    results['signature_algorithm'] = cert.get_signature_algorithm().decode('utf-8')
+                    
+                    # Validity period
+                    not_before = datetime.datetime.strptime(cert.get_notBefore().decode('utf-8'), '%Y%m%d%H%M%SZ')
+                    not_after = datetime.datetime.strptime(cert.get_notAfter().decode('utf-8'), '%Y%m%d%H%M%SZ')
+                    results['valid_from'] = not_before.strftime('%Y-%m-%d %H:%M:%S UTC')
+                    results['valid_until'] = not_after.strftime('%Y-%m-%d %H:%M:%S UTC')
+                    
+                    # Check if expired
+                    now = datetime.datetime.utcnow()
+                    results['is_expired'] = now > not_after
+                    results['days_until_expiry'] = (not_after - now).days
+                    
+                    # Issuer details
+                    issuer = cert.get_issuer()
+                    issuer_components = {}
+                    for i in range(issuer.get_entry_count()):
+                        entry = issuer.get_entry(i)
+                        issuer_components[entry.get_object().decode('utf-8')] = entry.get_data().decode('utf-8')
                     
                     results['issuer'] = {
                         'common_name': issuer_components.get('commonName', 'N/A'),
@@ -2916,7 +2890,7 @@ class ServerInfoScanner:
                 'cloud_security': 0,
                 'version_vulnerabilities': 0
             },
-            'scan_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            'scan_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         }
         
         # Gather required data if not already cached
@@ -3206,8 +3180,8 @@ class ServerInfoScanner:
         # Certificate expiry
         if 'not_after' in ssl_data:
             try:
-                expiry_date = datetime.datetime.strptime(ssl_data['not_after'], '%Y-%m-%d %H:%M:%S')
-                current_date = datetime.datetime.now()
+                expiry_date = datetime.strptime(ssl_data['not_after'], '%Y-%m-%d %H:%M:%S')
+                current_date = datetime.now()
                 days_remaining = (expiry_date - current_date).days
                 
                 results['certificate_expiry_days'] = days_remaining
@@ -3831,7 +3805,7 @@ class ServerInfoScanner:
         
         results = {
             'target': self.target,
-            'scan_time': datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'scan_time': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
             'open_ports': [],
             'vulnerabilities': [],
             'security_issues': {
@@ -3968,7 +3942,6 @@ class ServerInfoScanner:
     def _check_service_vulnerabilities(self, service: str, product: str, version: str) -> List[Dict[str, Any]]:
         """
         Check for known vulnerabilities in the detected service and version.
-        Uses an external vulnerability database (PostgreSQL or local JSON file).
         
         Args:
             service (str): Service name (e.g., http, ssh)
@@ -3980,139 +3953,10 @@ class ServerInfoScanner:
         """
         vulnerabilities = []
         
-        if not service or not product:
-            return vulnerabilities
-            
-        # Normalize inputs for lookup
-        service = service.lower() if service else ''
-        if product:
-            product = product.strip()
-        if version:
-            version = version.strip()
-            
-        self.logger.debug(f"Checking vulnerabilities for {service}/{product} version {version}")
-        
-        # Map service name to appropriate category for database lookup
-        service_category = service
-        
-        # Map common services to categories
-        service_mappings = {
-            'http': 'http',
-            'https': 'http',
-            'www': 'http',
-            'web': 'http',
-            'ssh': 'ssh',
-            'smtp': 'smtp',
-            'mail': 'smtp',
-            'ftp': 'ftp',
-            'mysql': 'database',
-            'mariadb': 'database',
-            'postgres': 'database',
-            'postgresql': 'database',
-            'mssql': 'database',
-            'dns': 'dns'
-        }
-        
-        if service in service_mappings:
-            service_category = service_mappings[service]
-        
-        # Use the vulnerability database to check for vulnerabilities
-        try:
-            db_vulnerabilities = self.vuln_db.get_vulnerabilities(service_category, product, version)
-            
-            # If no exact match found, try searching by product name
-            if not db_vulnerabilities:
-                self.logger.debug(f"No vulnerabilities found for {service_category}/{product} version {version}, trying keyword search")
-                db_vulnerabilities = self.vuln_db.search_vulnerabilities(product)
-                
-                # Limit keyword search results to most relevant 5
-                if db_vulnerabilities and len(db_vulnerabilities) > 5:
-                    db_vulnerabilities = db_vulnerabilities[:5]
-            
-            if db_vulnerabilities:
-                self.logger.info(f"Found {len(db_vulnerabilities)} potential vulnerabilities for {product} {version}")
-                
-                # Convert database vulnerabilities to the expected format
-                for vuln in db_vulnerabilities:
-                    # Extract and normalize vulnerability data
-                    cve_id = vuln.get('vuln_id', vuln.get('id', 'Unknown'))
-                    severity = vuln.get('severity', 'medium')
-                    description = vuln.get('description', 'No description available')
-                    cvss = vuln.get('cvss', 5.0)
-                    
-                    # Generate a recommendation based on severity
-                    recommendation = "Upgrade to the latest version"
-                    if severity == 'critical' or severity == 'high':
-                        recommendation = f"Urgent: Upgrade {product} immediately"
-                    elif severity == 'medium':
-                        recommendation = f"Recommended: Update {product} when possible"
-                    elif severity == 'low':
-                        recommendation = "Consider updating as part of regular maintenance"
-                    
-                    # Add references to recommendation if available
-                    references = vuln.get('references', [])
-                    if references:
-                        recommendation += ". See " + ", ".join(references[:2])
-                    
-                    vulnerability = {
-                        'cve_id': cve_id,
-                        'severity': severity,
-                        'description': description,
-                        'recommendation': recommendation,
-                        'cvss': cvss
-                    }
-                    
-                    # Add references as a separate field if available
-                    if references:
-                        vulnerability['references'] = references
-                    
-                    vulnerabilities.append(vulnerability)
-        except Exception as e:
-            self.logger.error(f"Error checking vulnerabilities: {e}")
-            
-        # Fallback to version analysis if no vulnerabilities found
-        if not vulnerabilities and version:
-            # Check if version appears outdated based on common versioning patterns
-            try:
-                # For web servers
-                if product.lower() in ['apache', 'nginx', 'iis', 'tomcat'] and service_category == 'http':
-                    major_version = int(version.split('.')[0]) if '.' in version else int(version)
-                    if product.lower() == 'apache' and major_version < 2:
-                        vulnerabilities.append({
-                            'cve_id': 'OUTDATED-APACHE',
-                            'severity': 'high',
-                            'description': f'Apache version {version} is significantly outdated and likely has multiple vulnerabilities',
-                            'recommendation': 'Upgrade to Apache 2.4.x or later'
-                        })
-                    elif product.lower() == 'nginx' and major_version < 1:
-                        vulnerabilities.append({
-                            'cve_id': 'OUTDATED-NGINX',
-                            'severity': 'high',
-                            'description': f'Nginx version {version} is significantly outdated and likely has multiple vulnerabilities',
-                            'recommendation': 'Upgrade to Nginx 1.20.x or later'
-                        })
-                
-                # For databases
-                elif product.lower() in ['mysql', 'mariadb', 'postgresql'] and service_category == 'database':
-                    major_version = int(version.split('.')[0]) if '.' in version else int(version)
-                    if product.lower() == 'mysql' and major_version < 5:
-                        vulnerabilities.append({
-                            'cve_id': 'OUTDATED-MYSQL',
-                            'severity': 'high',
-                            'description': f'MySQL version {version} is significantly outdated and likely has multiple vulnerabilities',
-                            'recommendation': 'Upgrade to MySQL 8.0 or later'
-                        })
-                    elif product.lower() == 'postgresql' and major_version < 10:
-                        vulnerabilities.append({
-                            'cve_id': 'OUTDATED-POSTGRESQL',
-                            'severity': 'medium',
-                            'description': f'PostgreSQL version {version} is outdated and may have security vulnerabilities',
-                            'recommendation': 'Upgrade to PostgreSQL 13 or later'
-                        })
-            except (ValueError, IndexError):
-                pass  # Ignore version parsing errors
-                
-        return vulnerabilities
+        # Simple vulnerability database keyed by service and product
+        # In a real implementation, this would connect to a CVE database or API
+        vuln_db = {
+            'http': {
                 'Apache': {
                     '2.4.49': [
                         {

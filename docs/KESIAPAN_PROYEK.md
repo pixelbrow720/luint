@@ -35,6 +35,7 @@ Proyek LUINT berada dalam keadaan **matang dan siap digunakan**. Semua fitur int
 | PANDUAN_INSTALASI.md | Instruksi lengkap untuk instalasi dan konfigurasi | `/PANDUAN_INSTALASI.md` |
 | STRUKTUR_KODE.md | Dokumentasi struktur kode dan arsitektur | `/STRUKTUR_KODE.md` |
 | FITUR_KEAMANAN.md | Detail tentang fitur penilaian postur keamanan | `/FITUR_KEAMANAN.md` |
+| FUTURE_OPTIMIZATION.md | Rencana pengembangan dan optimasi di masa depan | `/FUTURE_OPTIMIZATION.md` |
 | config.yaml.example | Contoh file konfigurasi | `/config.yaml.example` |
 
 ## Persyaratan Sistem
@@ -51,11 +52,15 @@ Proyek ini siap untuk penggunaan produksi dengan catatan berikut:
 - Untuk penggunaan volume tinggi, konfigurasikan pembatasan laju permintaan dengan tepat
 
 ## Perbaikan yang Direncanakan
-Meskipun proyek sudah lengkap dan matang, beberapa peningkatan dapat dipertimbangkan di masa depan:
-- Antarmuka web untuk visualisasi hasil yang lebih baik
+Meskipun proyek sudah lengkap dan matang, beberapa peningkatan dapat dipertimbangkan di masa depan. 
+Lihat file `FUTURE_OPTIMIZATION.md` untuk rencana pengembangan yang lebih rinci, yang mencakup:
+
+- Implementasi algoritma asinkron untuk performa yang lebih baik
+- Dukungan antarmuka Terminal UI dan antarmuka web untuk visualisasi hasil
 - Integrasi dengan API ancaman intelijen tambahan
+- Pengembangan modul-modul baru seperti Dark Web Scanning dan OSINT Social Media
 - Dukungan untuk pemindaian bersamaan beberapa target
-- Antarmuka pengguna grafis berbasis desktop
+- Optimasi sistem caching dan validasi input
 
 ## Cara Menggunakan
 Lihat `README.md` dan `PANDUAN_INSTALASI.md` untuk instruksi penggunaan lengkap. Perintah dasar:

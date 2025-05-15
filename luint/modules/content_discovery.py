@@ -558,6 +558,10 @@ class ContentDiscoveryScanner:
                     
                     results['forms'].append(form_data)
                 
+                # Convert sets to lists
+                results['internal_links'] = list(internal_links_set)
+                results['external_links'] = list(external_links_set)
+                
                 # Summary
                 results['internal_links_count'] = len(results['internal_links'])
                 results['external_links_count'] = len(results['external_links'])

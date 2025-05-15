@@ -17,6 +17,14 @@ from typing import List, Dict, Any, Union, Optional
 from luint.constants import REGEX_PATTERNS
 
 
+class SetEncoder(json.JSONEncoder):
+    """Custom JSON encoder that can handle sets by converting them to lists."""
+    def default(self, o):
+        if isinstance(o, set):
+            return list(o)
+        return super().default(o)
+
+
 def is_ip_address(target: str) -> bool:
     """
     Check if the target is a valid IP address.
@@ -238,7 +246,7 @@ def save_to_file(data: Any, filepath: str, format_type: str = 'json') -> bool:
             
         if format_type.lower() == 'json':
             with open(filepath, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=4, sort_keys=True, ensure_ascii=False)
+                json.dump(data, f, indent=4, sort_keys=True, ensure_ascii=False, cls=SetEncoder)
                 
         elif format_type.lower() == 'csv':
             # If data is a list of dictionaries

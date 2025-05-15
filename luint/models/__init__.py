@@ -1,0 +1,3 @@
+"""
+Models for LUINT database.
+"""

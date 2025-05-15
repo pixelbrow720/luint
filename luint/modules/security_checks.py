@@ -16,6 +16,7 @@ from luint.utils.logger import get_logger, LoggerAdapter
 from luint.utils.helpers import is_ip_address, is_domain, normalize_url
 from luint.utils.output_manager import progress_bar
 from luint.constants import SECURITY_HEADERS, DEFAULT_HEADERS, API_ENDPOINTS
+from luint.models.vulnerability import VulnerabilityDatabase
 
 logger = get_logger()
 
@@ -45,6 +46,7 @@ class SecurityChecksScanner:
         self.cache_manager = cache_manager
         self.rate_limiter = rate_limiter
         self.api_key_manager = api_key_manager
+        self.vuln_db = VulnerabilityDatabase(self.config)
         
         # Setup module-specific logger
         self.logger = LoggerAdapter(logger, module_name='security_checks', target=target)
@@ -993,119 +995,69 @@ class SecurityChecksScanner:
             self.logger.warning("No technologies detected for vulnerability scanning")
             return results
         
-        # Known vulnerabilities database by technology
-        # This is a simplified example - in a real implementation, this would be a more comprehensive database
-        # or would use a vulnerability database API
-        vuln_database = {
-            'WordPress': [
-                {
-                    'id': 'WP-CVE-2020-4046',
-                    'name': 'WordPress < 5.8.3 - SQL Injection',
-                    'description': 'SQL Injection vulnerability in WordPress core affecting versions before 5.8.3',
-                    'severity': 'high',
-                    'cvss': 8.8,
-                    'references': ['https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-4046']
-                },
-                {
-                    'id': 'WP-CVE-2020-5188',
-                    'name': 'WordPress - Cross-Site Scripting',
-                    'description': 'XSS vulnerability in WordPress comments',
-                    'severity': 'medium',
-                    'cvss': 6.5,
-                    'references': ['https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-5188']
-                }
-            ],
-            'Drupal': [
-                {
-                    'id': 'DRP-CVE-2018-7600',
-                    'name': 'Drupal Drupalgeddon2',
-                    'description': 'Remote Code Execution vulnerability in Drupal 7 and 8',
-                    'severity': 'critical',
-                    'cvss': 9.8,
-                    'references': ['https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-7600']
-                }
-            ],
-            'jQuery': [
-                {
-                    'id': 'JQ-CVE-2020-11023',
-                    'name': 'jQuery < 3.5.0 - Cross-Site Scripting',
-                    'description': 'XSS vulnerability in jQuery affecting versions before 3.5.0',
-                    'severity': 'medium',
-                    'cvss': 6.1,
-                    'references': ['https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-11023']
-                }
-            ],
-            'Apache': [
-                {
-                    'id': 'AP-CVE-2021-41773',
-                    'name': 'Apache HTTP Server - Path Traversal',
-                    'description': 'Path traversal vulnerability in Apache HTTP Server 2.4.49',
-                    'severity': 'high',
-                    'cvss': 7.5,
-                    'references': ['https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2021-41773']
-                }
-            ],
-            'Nginx': [
-                {
-                    'id': 'NG-CVE-2019-9516',
-                    'name': 'Nginx - HTTP/2 DoS',
-                    'description': 'HTTP/2 denial of service vulnerability affecting Nginx',
-                    'severity': 'medium',
-                    'cvss': 5.9,
-                    'references': ['https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-9516']
-                }
-            ],
-            'PHP': [
-                {
-                    'id': 'PHP-CVE-2019-11043',
-                    'name': 'PHP - Remote Code Execution',
-                    'description': 'PHP-FPM remote code execution vulnerability',
-                    'severity': 'high',
-                    'cvss': 9.8,
-                    'references': ['https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-11043']
-                }
-            ],
-            'IIS': [
-                {
-                    'id': 'IIS-CVE-2017-7269',
-                    'name': 'IIS 6.0 - Buffer Overflow',
-                    'description': 'Buffer overflow in IIS 6.0 WebDAV service',
-                    'severity': 'high',
-                    'cvss': 7.8,
-                    'references': ['https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2017-7269']
-                }
-            ],
-            'Bootstrap': [
-                {
-                    'id': 'BT-CVE-2019-8331',
-                    'name': 'Bootstrap < 4.3.1 - XSS',
-                    'description': 'XSS vulnerability in Bootstrap Toast component',
-                    'severity': 'medium',
-                    'cvss': 6.1,
-                    'references': ['https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2019-8331']
-                }
-            ]
-        }
+        # Using the vulnerability database manager to access a PostgreSQL or local JSON database
+        self.logger.info("Accessing vulnerability database for technology vulnerabilities")
         
         # Check detected technologies against vulnerability database
         detected_vulns = []
         
         for tech in technologies:
-            # Extract the technology name
-            tech_name = tech.split(':')[-1].strip() if ':' in tech else tech.strip()
+            # Extract the technology name and try to extract version if available
+            tech_parts = tech.split(':')
+            tech_name = tech_parts[-1].strip() if len(tech_parts) > 1 else tech.strip()
             
-            # Check if there are vulnerabilities for this technology
-            for db_tech, vulns in vuln_database.items():
-                if db_tech.lower() in tech_name.lower() or tech_name.lower() in db_tech.lower():
-                    for vuln in vulns:
+            # Extract version if it's contained in the tech name
+            version = None
+            version_match = re.search(r'(\d+\.\d+\.?\d*)', tech_name)
+            if version_match:
+                version = version_match.group(1)
+                tech_name = tech_name.split(' ')[0].strip()  # Extract just the name part
+            
+            self.logger.debug(f"Checking vulnerabilities for {tech_name} {version if version else ''}")
+            
+            # Try to find vulnerabilities for this technology in our database
+            # Categorize technology into appropriate service category
+            service_category = "http"  # Default to http service
+            
+            # Map technology to appropriate service category
+            if any(cms in tech_name.lower() for cms in ["wordpress", "drupal", "joomla"]):
+                service_category = "cms"
+            elif any(db in tech_name.lower() for db in ["mysql", "postgresql", "mongodb"]):
+                service_category = "database"
+            elif any(fw in tech_name.lower() for fw in ["django", "flask", "laravel", "react", "angular", "vue"]):
+                service_category = "framework"
+            elif any(server in tech_name.lower() for server in ["apache", "nginx", "iis"]):
+                service_category = "http"
+            
+            # Query our vulnerability database
+            vulns = self.vuln_db.get_vulnerabilities(service_category, tech_name, version or "")
+            
+            if vulns:
+                self.logger.info(f"Found {len(vulns)} vulnerabilities for {tech_name}")
+                for vuln in vulns:
+                    detected_vulns.append({
+                        'technology': tech_name + (f" {version}" if version else ""),
+                        'id': vuln.get('vuln_id', vuln.get('id')),
+                        'name': vuln.get('name', 'Unknown vulnerability'),
+                        'description': vuln.get('description', 'No description available'),
+                        'severity': vuln.get('severity', 'medium'),
+                        'cvss': vuln.get('cvss', 5.0),
+                        'references': vuln.get('references', [])
+                    })
+            else:
+                # Try direct keyword search in case the technology wasn't properly categorized
+                search_results = self.vuln_db.search_vulnerabilities(tech_name)
+                if search_results:
+                    self.logger.info(f"Found {len(search_results)} vulnerabilities via keyword search for {tech_name}")
+                    for vuln in search_results[:5]:  # Limit to top 5 results for keyword search
                         detected_vulns.append({
-                            'technology': tech_name,
-                            'id': vuln['id'],
-                            'name': vuln['name'],
-                            'description': vuln['description'],
-                            'severity': vuln['severity'],
-                            'cvss': vuln['cvss'],
-                            'references': vuln['references']
+                            'technology': tech_name + (f" {version}" if version else ""),
+                            'id': vuln.get('vuln_id', vuln.get('id')),
+                            'name': vuln.get('name', 'Unknown vulnerability'),
+                            'description': vuln.get('description', 'No description available'),
+                            'severity': vuln.get('severity', 'medium'),
+                            'cvss': vuln.get('cvss', 5.0),
+                            'references': vuln.get('references', [])
                         })
         
         # Additional checks based on HTTP headers or other information

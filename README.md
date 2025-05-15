@@ -2,6 +2,10 @@
 
 LUINT (Lookup Intelligence) is a powerful modular OSINT (Open Source Intelligence) tool designed for advanced network reconnaissance and security analysis.
 
+<p align="center">
+  <img src="generated-icon.png" alt="LUINT Logo" width="150" height="150">
+</p>
+
 ## Features
 
 - **Modular Architecture**: 6 specialized modules with 69 total intelligence gathering capabilities
