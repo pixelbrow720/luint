@@ -87,7 +87,7 @@ class ContentDiscoveryScanner:
         self.found_codes = self.module_config.get('found_codes', [200, 201, 202, 203, 204, 301, 302, 307])
         
         # Word list paths
-        self.wordlist_dirs = self.module_config.get('wordlist_dirs', 'self.config.get('directories_wordlist', 'wordlists/directories.txt')')
+        self.wordlist_dirs = self.module_config.get('wordlist_dirs', self.config.get('directories_wordlist', 'wordlists/directories.txt'))
         self.wordlist_files = self.module_config.get('wordlist_files', 'wordlists/files.txt')
         self.wordlist_extensions = self.module_config.get('wordlist_extensions', COMMON_EXTENSIONS[:10])
         
@@ -139,7 +139,6 @@ class ContentDiscoveryScanner:
         """
         Run content discovery methods with parallel processing.
         For production use, this will perform comprehensive discovery.
-        In Replit environment, it will run a limited subset to avoid timeouts.
         
         Returns:
             dict: Consolidated content discovery results
@@ -158,7 +157,7 @@ class ContentDiscoveryScanner:
         
         # Get configuration parameters
         max_threads = self.config.get('threads', 5)
-        is_limited = True  # Default to limited scan in Replit
+        is_limited = True  
         
         # Define operations to run based on environment constraints
         operations = []

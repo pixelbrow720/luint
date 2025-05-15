@@ -22,9 +22,6 @@
 Nmap diperlukan untuk modul server_info. Untuk menginstal:
 
 ```bash
-# Di Replit
-# Nmap sudah terinstal secara default
-
 # Di Linux
 sudo apt-get install nmap
 

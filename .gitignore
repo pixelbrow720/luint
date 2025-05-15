@@ -67,8 +67,3 @@ desktop.ini
 api_keys.txt
 credentials.json
 
-# Replit specific
-.replit
-.replit.nix
-.config/
-poetry.lock

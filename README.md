@@ -158,7 +158,6 @@ This project is licensed under the MIT License.
 
 - The OSINT community for inspiration and best practices
 - All the open-source libraries that made this project possible
-- Replit for providing an excellent development environment
 
 ## Disclaimer
 
